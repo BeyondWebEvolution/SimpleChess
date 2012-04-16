@@ -1,0 +1,192 @@
+package mvc.view
+{
+	import flash.display.*;
+	import flash.events.Event;
+	import flash.geom.Point;
+	
+	import mvc.control.PieceController;
+	import mvc.view.pieces.*;
+	
+	public class Board extends Sprite
+	{
+		public var tile:Tile;
+		public var tileContainer:Sprite;
+		
+		public var piece_KNIGHT_WHITE:Knight;
+		public var piece_BISHOP_WHITE:Bishop;
+		public var piece_QUEEN_WHITE:Queen;
+		public var piece_KNIGHT_BLACK:Knight;
+		public var piece_BISHOP_BLACK:Bishop;
+		public var piece_QUEEN_BLACK:Queen;
+		
+		private var gridPosFiles:Array = ["A", "B", "C", "D", "E", "F", "G", "H"];
+		private var gridPosRanks:Array = ["1", "2", "3", "4", "5", "6", "7", "8"];
+		
+		public var tiles:Array = [];
+		public var pieces:Array = [];
+		
+		private var offsetX:uint = 350;
+		private var offsetY:uint = 450;
+		
+		private var app:*;
+		
+		// GAME BOARD ///////////////////////////////////////////////////////////////////////
+		public function Board(gameObject:Object)
+		{
+			app = gameObject;
+		}
+		
+		// MAKE TILES /////////////////////
+		public function makeTiles():void {
+			
+			tileContainer = new Sprite();
+			addChild(tileContainer);
+			
+			// checker board parameters
+			var even:uint = 0x000000;
+			var odd:uint = 0xFFFFFF;
+			var size:int = 100;
+			
+			// number of checker tiles
+			var nH:int = 800 / size;
+			var nV:int = 800 / size;
+			
+			// loop vars
+			var clr:uint;
+			var i:uint;
+			var j:uint;
+			
+			// loop vertical
+			for (i=0 ; i<nV ; ++i)
+			{
+				// flip values of even and odd colours using bitwise operations
+				even ^= odd;
+				odd  ^= even;
+				even ^= odd;
+				
+				// loop horizontal
+				for (j=0 ; j<nH ; ++j)
+				{
+					// bitwise modulus
+					// check if column is odd or even, then set colour
+					clr = j & 1 ? even : odd;
+					
+					// draw tile with previously set colour
+					tile = new Tile(clr, size, i, j);
+					// set position name
+					tile.setName(gridPosFiles[i] + gridPosRanks[j]);
+					
+					tiles.push(tile);
+					tileContainer.addChild(tile);
+				}
+			}
+		}
+		
+		// ADD PIECES //////////////////////////
+		public function addPieces():void 
+		{
+			piece_KNIGHT_BLACK = new Knight(app, 0);
+			pieces.push(piece_KNIGHT_BLACK);
+			addChild(piece_KNIGHT_BLACK);
+			
+			piece_BISHOP_BLACK = new Bishop(app, 0);
+			pieces.push(piece_BISHOP_BLACK);
+			addChild(piece_BISHOP_BLACK);
+			
+			piece_QUEEN_BLACK = new Queen(app, 0);
+			pieces.push(piece_QUEEN_BLACK);
+			addChild(piece_QUEEN_BLACK);
+			
+			piece_KNIGHT_WHITE = new Knight(app, 1);
+			pieces.push(piece_KNIGHT_WHITE);
+			addChild(piece_KNIGHT_WHITE);
+			
+			piece_BISHOP_WHITE = new Bishop(app, 1);
+			pieces.push(piece_BISHOP_WHITE);
+			addChild(piece_BISHOP_WHITE);
+			
+			piece_QUEEN_WHITE = new Queen(app, 1);
+			pieces.push(piece_QUEEN_WHITE);
+			addChild(piece_QUEEN_WHITE);
+		}
+		
+		// ARRANGE PIECES //////////////////////////
+		public function arrangePieces():void
+		{	
+			//trace ("--------------------");
+			//trace (">>> arrangePieces ::");
+			var myPiece;
+			var myTile;
+			var point:Point;
+			
+			for (var p:uint=0 ; p < pieces.length ; p++) {
+				myPiece = pieces[p];
+				myTile = tiles[p];
+				
+				point = getRandomTilePosition();
+			
+				myPiece.x = point.x;
+				myPiece.y = point.y;
+				
+				//trace("piece:" + myPiece.name + " = " + myPiece.x + ", " + myPiece.y);
+				//trace ("---");
+			}
+			//trace ("--------------------");
+			
+	
+		}
+		
+		// GET RANDOM TILE POSITION
+		private function getRandomTilePosition():Point
+		{
+			var point:Point = new Point();
+			var random:int;
+	
+			// get random position (non duplicate)
+			do 
+			{
+				random = rand(0, tiles.length -1);
+				point.x = tiles[random].getX() - offsetX;
+				point.y = tiles[random].getY() - offsetY;
+			} 
+			while (checkPositionDuplicates(point) == true);
+			
+			/*
+			point.x = tiles[0].getX() - offsetX;
+			point.y = tiles[0].getY() - offsetY;
+			trace ("p: " + point.x + ", " + point.y);
+			*/
+	
+			return point;
+		}
+		
+		
+		// CHECK FOR DUPLICATE POSITION
+		private function checkPositionDuplicates(point:Point):Boolean
+		{
+			var duplicate:Boolean;
+			
+			for (var i:uint ; i < pieces.length ; i++) {
+				//trace (" check [ " + point.x + " =? " + pieces[i].x + " ]");
+				//trace (" check [ " + point.y + " =? " + pieces[i].y + " ]");
+				if (point.x == pieces[i].x && point.y == pieces[i].y) {
+					duplicate = true;
+					//trace (" = " + duplicate); 
+					break;
+				} else { 
+					duplicate = false;
+					//trace (" = " + duplicate); 
+				}
+			}
+			//trace ("duplicate: " + duplicate);
+			//trace ("assign >>> : " + point.x + ", " + point.y);
+			return duplicate;
+		}
+		
+		// GET RANDOM NUMBER 
+		private function rand(min:int, max:int):int
+		{
+			return Math.random() * (max - min + 1) + min;
+		}
+	}
+}
